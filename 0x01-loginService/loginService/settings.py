@@ -21,6 +21,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-f1^r+1ypk6bnx8hkv&=*&ijd4uv#tgofk!vcexd%@r4sg2dqa8'
+with open('.env') as f:
+    PASSWORD = f.read().split('=')[-1].strip()
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -75,8 +77,15 @@ WSGI_APPLICATION = 'loginService.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'Djangoapp',
+        'USER': 'Djangouser',
+        'PASSWORD': PASSWORD,
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+        }
     }
 }
 
