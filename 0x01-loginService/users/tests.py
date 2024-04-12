@@ -1,5 +1,6 @@
 from django.test import TestCase
 from users.models import Users
+from django.urls import reverse
 # Create your tests here.
 
 
@@ -43,4 +44,23 @@ class UsersTestCase(TestCase):
                                  phone='1234567890', address="test",
                                  city="test", state="test", country="test",
                                  zip="123456")
+    
+    def test_working_app(self):
+        response = self.client.get(reverse('working_app'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_create_user_with_endpoint(self):
+        data = {'password': 'test', 'username': 'test2', 'email': 'test2@gmail.com',
+            'phone': '9876543210', 'address': 'test2', 'city': 'test2',
+            'state': 'test2', 'country': 'test2', 'zip': '654321'}
+        response = self.client.post(reverse('signup'), data)
+        self.assertEqual(response.status_code, 201)
         
+    def test_create_user_with_endpoint_with_same_email(self):
+        data = {'password': 'test', 'username': 'test2', 'email': 'test2@gmail.com',
+            'phone': '9876543210', 'address': 'test2', 'city': 'test2',
+            'state': 'test2', 'country': 'test2', 'zip': '654321'}
+        self.client.post(reverse('signup'), data)
+        response = self.client.post(reverse('signup'), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'Check your email for activation link')
