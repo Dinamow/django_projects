@@ -18,12 +18,13 @@ def create_user(request):
                                  "message": "Check your email for activation link"},
                                 status=400)
     try:
-        Users.objects.create(username=data['username'], password=data['password'],
-                             email=data['email'], phone=data['phone'],
-                             address=data['address'], city=data['city'],
-                             state=data['state'], country=data['country'],
-                             zip=data['zip'])
-        return JsonResponse({"status": "success", "message": "User created"},
+        user = Users.objects.create(username=data['username'], password=data['password'],
+                                    email=data['email'], phone=data['phone'],
+                                    address=data['address'], city=data['city'],
+                                    state=data['state'], country=data['country'],
+                                    zip=data['zip'])
+        return JsonResponse({"status": "success", "message": "User created",
+                             "activation_token": user.activation_token},
                             status=201)
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
