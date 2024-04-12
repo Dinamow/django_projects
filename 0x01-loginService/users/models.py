@@ -9,7 +9,7 @@ class Users(models.Model):
     phone = models.CharField(max_length=50, unique=True)
     session_token = models.CharField(max_length=50, default=0)
     reset_token = models.CharField(max_length=50, default=0)
-    activation_token = models.CharField(max_length=50, default=str(uuid4))
+    activation_token = models.CharField(max_length=50, default=str(uuid4()))
     activated = models.BooleanField(default=False)
     address = models.CharField(max_length=50)
     city = models.CharField(max_length=50)
