@@ -55,7 +55,6 @@ def activate_user(request):
         return JsonResponse({"status": "error", "message": "Invalid token"},
                             status=400)
     user.activated = True
-    user.activation_token = ""
     user.save()
     return JsonResponse({"status": "success", "message": "User activated"})
 
