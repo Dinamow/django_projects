@@ -55,6 +55,21 @@ class UsersTestCase(TestCase):
             'state': 'test2', 'country': 'test2', 'zip': '654321'}
         response = self.client.post(reverse('signup'), data)
         self.assertEqual(response.status_code, 201)
+    
+    def test_hashed_password(self):
+        data = {'password': 'test', 'username': 'test2', 'email': 'test2@gmail.com',
+            'phone': '9876543210', 'address': 'test2', 'city': 'test2',
+            'state': 'test2', 'country': 'test2', 'zip': '654321'}
+        self.client.post(reverse('signup'), data)
+        user = Users.objects.get(email="test2@gmail.com")
+        self.assertNotEqual(user.password, 'test')
+    
+    def test_missing_fields(self):
+        data = {'password': 'test', 'username': 'test2', 'email': 'test2@gmail.com',
+            'phone': '9876543210', 'city': 'test2',
+            'state': 'test2', 'country': 'test2', 'zip': '654321'}
+        response = self.client.post(reverse('signup'), data)
+        self.assertEqual(response.status_code, 400)
         
     def test_create_user_with_endpoint_with_same_email(self):
         data = {'password': 'test', 'username': 'test2', 'email': 'test2@gmail.com',
@@ -75,4 +90,3 @@ class UsersTestCase(TestCase):
         resp = self.client.get(reverse('activate') + '?token=' + 'invalid_token')
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()['message'], 'Invalid token')
-    
