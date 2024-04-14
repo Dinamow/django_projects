@@ -2,6 +2,12 @@ from django.http import JsonResponse
 from users.models import Users
 from django.shortcuts import redirect
 from uuid import uuid4
+from bcrypt import hashpw, gensalt
+
+
+requered_fields = ['username', 'password', 'email', 'phone', 'address', 'city',
+                   'state', 'country', 'zip']
+
 
 # Create your views here.
 def create_user(request):
@@ -9,6 +15,10 @@ def create_user(request):
         return JsonResponse({"status": "error", "message": "Invalid request"},
                             status=400)
     data = request.POST
+    for field in requered_fields:
+        if not data.get(field):
+            return JsonResponse({"status": "error", "message": f"{field} is required"},
+                                status=400)
     user = Users.objects.filter(email=data['email']).first()
     if user:
         if user.activated:
@@ -19,7 +29,8 @@ def create_user(request):
                                  "message": "Check your email for activation link"},
                                 status=400)
     try:
-        user = Users.objects.create(username=data['username'], password=data['password'],
+        passowrd = hashpw(data['password'].encode(), gensalt())
+        user = Users.objects.create(username=data['username'], password=passowrd,
                                     email=data['email'], phone=data['phone'],
                                     address=data['address'], city=data['city'],
                                     state=data['state'], country=data['country'],
