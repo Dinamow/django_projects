@@ -39,7 +39,7 @@ def working_app(request):
     return JsonResponse({"status": "success"})
 
 def activate_user(request):
-    user = Users.objects.get(activation_token=request.GET.get('token'))
+    user = Users.objects.filter(activation_token=request.GET.get('token')).first()
     if not user:
         return JsonResponse({"status": "error", "message": "Invalid token"},
                             status=400)
