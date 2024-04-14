@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from users.models import Users
+from django.shortcuts import redirect
 from uuid import uuid4
 
 # Create your views here.
@@ -22,7 +23,7 @@ def create_user(request):
                                     email=data['email'], phone=data['phone'],
                                     address=data['address'], city=data['city'],
                                     state=data['state'], country=data['country'],
-                                    zip=data['zip'])
+                                    zip=data['zip'], activation_token=str(uuid4()))
         return JsonResponse({"status": "success", "message": "User created",
                              "activation_token": user.activation_token},
                             status=201)
@@ -36,3 +37,16 @@ def all_users(request):
 
 def working_app(request):
     return JsonResponse({"status": "success"})
+
+def activate_user(request):
+    user = Users.objects.get(activation_token=request.GET.get('token'))
+    if not user:
+        return JsonResponse({"status": "error", "message": "Invalid token"},
+                            status=400)
+    user.activated = True
+    user.activation_token = ""
+    user.save()
+    return JsonResponse({"status": "success", "message": "User activated"})
+
+def login_user(request):
+    pass
