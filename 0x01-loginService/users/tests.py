@@ -64,3 +64,15 @@ class UsersTestCase(TestCase):
         response = self.client.post(reverse('signup'), data)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()['message'], 'Check your email for activation link')
+    
+    def test_activate_user(self):
+        resp = self.client.get(reverse('activate') + '?token=' + Users.objects.get(email="meemoo102039@gmail.com").activation_token)
+        self.assertNotEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'User activated')
+        self.assertEqual(Users.objects.get(email="meemoo102039@gmail.com").activated, True)
+    
+    def test_activate_user_with_invalid_token(self):
+        resp = self.client.get(reverse('activate') + '?token=' + 'invalid_token')
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'Invalid token')
+    
