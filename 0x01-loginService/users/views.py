@@ -1,8 +1,7 @@
 from django.http import JsonResponse
 from users.models import Users
-from django.shortcuts import redirect
 from uuid import uuid4
-from bcrypt import hashpw, gensalt
+from django.contrib.auth.hashers import make_password, check_password
 
 
 requered_fields = ['username', 'password', 'email', 'phone', 'address', 'city',
@@ -29,7 +28,7 @@ def create_user(request):
                                  "message": "Check your email for activation link"},
                                 status=400)
     try:
-        passowrd = hashpw(data['password'].encode(), gensalt())
+        passowrd = make_password(data['password'])
         user = Users.objects.create(username=data['username'], password=passowrd,
                                     email=data['email'], phone=data['phone'],
                                     address=data['address'], city=data['city'],
@@ -59,4 +58,25 @@ def activate_user(request):
     return JsonResponse({"status": "success", "message": "User activated"})
 
 def login_user(request):
-    pass
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid request"},
+                            status=400)
+    data = request.POST
+    if not data.get('email') or not data.get('password'):
+        return JsonResponse({"status": "error", "message": "Email and password are required"},
+                            status=400)
+    user = Users.objects.filter(email=data['email']).first()
+    if not user:
+        return JsonResponse({"status": "error", "message": "Invalid email"},
+                            status=400)
+    if not user.activated:
+        return JsonResponse({"status": "error", "message": "User not activated"},
+                            status=400)
+    if not check_password(data['password'], user.password):
+        return JsonResponse({"status": "error", "message": "Invalid password"},
+                            status=400)
+    user.session_token = str(uuid4())
+    request.session['session_id'] = user.session_token
+    user.save()
+    return JsonResponse({"status": "success", "message": "User logged in",
+                         "token": user.session_token})
