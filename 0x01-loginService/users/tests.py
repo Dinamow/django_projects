@@ -1,14 +1,15 @@
 from django.test import TestCase
 from users.models import Users
 from django.urls import reverse
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 # Create your tests here.
 
 
 class UsersTestCase(TestCase):
     
     def setUp(self):
-        Users.objects.create(username="test", password="test",
+        passowrd = make_password("hardone")
+        Users.objects.create(username="test", password=passowrd,
                              email="meemoo102039@gmail.com", phone="1234567890",
                              address="test", city="test", state="test",
                              country="test", zip="123456")
@@ -46,19 +47,21 @@ class UsersTestCase(TestCase):
                                  city="test", state="test", country="test",
                                  zip="123456")
     
-    def test_working_app(self):
+    def test_working_app(self): # no need
         response = self.client.get(reverse('working_app'))
         self.assertEqual(response.status_code, 200)
 
     def test_create_user_with_endpoint(self):
-        data = {'password': 'test', 'username': 'test2', 'email': 'test2@gmail.com',
+        password = 'thisisatestpassword'
+        data = {'password': password, 'username': 'test2', 'email': 'test2@gmail.com',
             'phone': '9876543210', 'address': 'test2', 'city': 'test2',
             'state': 'test2', 'country': 'test2', 'zip': '654321'}
         response = self.client.post(reverse('signup'), data)
         self.assertEqual(response.status_code, 201)
     
     def test_hashed_password(self):
-        data = {'password': 'test', 'username': 'test2', 'email': 'test2@gmail.com',
+        password = 'thisisatestpassword'
+        data = {'password': password, 'username': 'test2', 'email': 'test2@gmail.com',
             'phone': '9876543210', 'address': 'test2', 'city': 'test2',
             'state': 'test2', 'country': 'test2', 'zip': '654321'}
         self.client.post(reverse('signup'), data)
@@ -73,7 +76,8 @@ class UsersTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         
     def test_create_user_with_endpoint_with_same_email(self):
-        data = {'password': 'test', 'username': 'test2', 'email': 'test2@gmail.com',
+        password = 'thisisatestpassword'
+        data = {'password': password, 'username': 'test2', 'email': 'test2@gmail.com',
             'phone': '9876543210', 'address': 'test2', 'city': 'test2',
             'state': 'test2', 'country': 'test2', 'zip': '654321'}
         self.client.post(reverse('signup'), data)
@@ -95,7 +99,7 @@ class UsersTestCase(TestCase):
     def test_login_user(self):
         self.test_create_user_with_endpoint()
         self.client.get(reverse('activate') + '?token=' + Users.objects.get(email="test2@gmail.com").activation_token)
-        data = {'email': 'test2@gmail.com', 'password': 'test'}
+        data = {'email': 'test2@gmail.com', 'password': 'thisisatestpassword'}
         resp = self.client.post(reverse('login'), data)
         self.assertEqual(resp.status_code, 200)
         self.assertNotEqual(resp.json()['token'], None)
