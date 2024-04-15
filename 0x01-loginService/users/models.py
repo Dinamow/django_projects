@@ -18,5 +18,16 @@ class Users(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def to_dict(self):
+        return {'username': self.username,
+                'email': self.email,
+                'phone': self.phone,
+                'address': self.address,
+                'city': self.city,
+                'state': self.state,
+                'country': self.country,
+                'zip': self.zip,
+                'last_update': self.updated_at}
+    
     def __str__(self):
         return self.username
