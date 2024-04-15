@@ -3,6 +3,8 @@ from users.models import Users
 from uuid import uuid4
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
+from django.utils import timezone
+
 
 
 requered_fields = ['username', 'password', 'email', 'phone', 'address', 'city',
@@ -134,3 +136,22 @@ def profile(request, username):
                             status=400)
     return JsonResponse({"status": "success", "user": user.to_dict()})
 
+def update_profile(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid request"},
+                            status=400)
+    data = request.POST
+    if not data.get('username'):
+        return JsonResponse({"status": "error", "message": "Username is required"},
+                            status=400)
+    user = Users.objects.filter(session_token=request.session['session_id']).first()
+    if not user:
+        return JsonResponse({"status": "error", "message": "No user found"},
+                            status=400)
+    fields = ['username', 'phone', 'address', 'city', 'state', 'country', 'zip']
+    for field in fields:
+        if data.get(field):
+            setattr(user, field, data[field])
+    user.updated_at = timezone.now()
+    user.save()
+    return JsonResponse({"status": "success", "message": "User updated"})
