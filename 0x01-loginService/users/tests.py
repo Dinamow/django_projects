@@ -152,3 +152,12 @@ class UsersTestCase(TestCase):
         Users.objects.get(username='new_username')
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['status'], 'success')
+    
+    def test_delete_user_account(self):
+        self.test_login_user()
+        user = Users.objects.get(email='test2@gmail.com')
+        self.assertNotEqual(user, None)
+        resp = self.client.post(reverse('delete_acc'), {'password': 'thisisatestpassword'})
+        self.assertEqual(resp.status_code, 200)
+        user = Users.objects.filter(email='test2@gmail.com').first()
+        self.assertEqual(user, None)
