@@ -145,3 +145,10 @@ class UsersTestCase(TestCase):
         resp = self.client.get(reverse('profile', args=['username']))
         self.assertEqual(resp.status_code, 400)
         self.assertEqual(resp.json()['message'], 'No user found')
+    
+    def test_update_user_profile(self):
+        self.test_login_user()
+        resp = self.client.post(reverse('update_profile'), {'username': 'new_username'})
+        Users.objects.get(username='new_username')
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['status'], 'success')
