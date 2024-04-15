@@ -80,3 +80,19 @@ def login_user(request):
     user.save()
     return JsonResponse({"status": "success", "message": "User logged in",
                          "token": user.session_token})
+    
+def logout_user(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid request"},
+                            status=400)
+    if not request.session.get('session_id'):
+        return JsonResponse({"status": "error", "message": "User not logged in"},
+                            status=400)
+    user = Users.objects.filter(session_token=request.session['session_id']).first()
+    if not user:
+        return JsonResponse({"status": "error", "message": "User not logged in"},
+                            status=400)
+    request.session['session_id'] = None
+    user.session_token = ''
+    user.save()
+    return JsonResponse({"status": "success", "message": "User logged out"})
