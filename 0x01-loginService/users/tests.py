@@ -1,6 +1,7 @@
 from django.test import TestCase
 from users.models import Users
 from django.urls import reverse
+from django.contrib.auth.hashers import check_password
 # Create your tests here.
 
 
@@ -112,3 +113,23 @@ class UsersTestCase(TestCase):
         resp = self.client.post(reverse('logout'))
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.json()['message'], 'User logged out')
+    
+    def test_forgot_passowrd(self):
+        token = Users.objects.get(email='meemoo102039@gmail.com').reset_token
+        self.assertEqual(token, None)
+        resp = self.client.post(reverse('forgot_password'), {'email': 'meemoo102039@gmail.com'})
+        token = Users.objects.get(email='meemoo102039@gmail.com').reset_token
+        self.assertNotEqual(token, None)
+        self.assertEqual(resp.json()['message'], 'Check your email for activation link')
+    
+    def test_change_forgot_password(self):
+        self.test_forgot_passowrd()
+        token = Users.objects.get(email='meemoo102039@gmail.com').reset_token
+        passowrd = Users.objects.get(email='meemoo102039@gmail.com').password
+        resp = self.client.post(reverse('reset_password'), {'token': token, 'password': 'new_password'})
+        new_passowrd = Users.objects.get(email='meemoo102039@gmail.com').password
+        self.assertNotEqual(passowrd, 'new_password')
+        self.assertNotEqual(new_passowrd, 'new_password')
+        self.assertEqual(check_password('new_password', new_passowrd), True)
+        self.assertEqual(resp.json()['message'], 'Password changed')
+        self.assertEqual(resp.status_code, 200)

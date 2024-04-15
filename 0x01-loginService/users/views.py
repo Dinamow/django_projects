@@ -96,3 +96,35 @@ def logout_user(request):
     user.session_token = ''
     user.save()
     return JsonResponse({"status": "success", "message": "User logged out"})
+
+def forgot_password(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid request"},
+                            status=400)
+    email = request.POST.get('email')
+    if not email:
+        return JsonResponse({"status": "error", "message": "Email is required"},
+                            status=400)
+    user = Users.objects.filter(email=email).first()
+    if not user:
+        return JsonResponse({"status": "error", "message": "Invalid email"},
+                            status=400)
+    user.reset_token = str(uuid4())
+    user.save()
+    return JsonResponse({"status": "success", "message": "Check your email for activation link"})
+
+def reset_password(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid request"},
+                            status=400)
+    data = request.POST
+    if not data.get('token') or not data.get('password'):
+        return JsonResponse({"status": "error", "message": "Token and password are required"},
+                            status=400)
+    user = Users.objects.filter(reset_token=data['token']).first()
+    if not user:
+        return JsonResponse({"status": "error", "message": "Invalid token"},
+                            status=400)
+    user.password = make_password(data['password'])
+    user.save()
+    return JsonResponse({"status": "success", "message": "Password changed"})
