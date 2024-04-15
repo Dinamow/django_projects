@@ -46,10 +46,6 @@ class UsersTestCase(TestCase):
                                  phone='1234567890', address="test",
                                  city="test", state="test", country="test",
                                  zip="123456")
-    
-    def test_working_app(self): # no need
-        response = self.client.get(reverse('working_app'))
-        self.assertEqual(response.status_code, 200)
 
     def test_create_user_with_endpoint(self):
         password = 'thisisatestpassword'
@@ -137,3 +133,15 @@ class UsersTestCase(TestCase):
         self.assertEqual(check_password('new_password', new_passowrd), True)
         self.assertEqual(resp.json()['message'], 'Password changed')
         self.assertEqual(resp.status_code, 200)
+
+    def test_get_user_profile(self):
+        self.test_activate_user()
+        resp = self.client.get(reverse('profile', args=['test']))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['status'], 'success')
+
+    def test_get_user_not_exists(self):
+        self.test_login_user()
+        resp = self.client.get(reverse('profile', args=['username']))
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'No user found')
