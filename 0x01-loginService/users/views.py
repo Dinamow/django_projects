@@ -42,14 +42,6 @@ def create_user(request):
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
 
-def all_users(request):
-    users = Users.objects.all()
-    return JsonResponse({"count": Users.objects.count(),
-                         "users": list(users.values())})
-
-def working_app(request):
-    return JsonResponse({"status": "success"})
-
 def activate_user(request):
     user = Users.objects.filter(activation_token=request.GET.get('token')).first()
     if not user:
@@ -134,3 +126,11 @@ def reset_password(request):
         return JsonResponse({"status": "success", "message": "Password changed"})
     except Exception as e:
         return JsonResponse({"status": "error", "message": str(e)}, status=400)
+
+def profile(request, username):
+    user = Users.objects.filter(username=username).first()
+    if not user:
+        return JsonResponse({"status": "error", "message": "No user found"},
+                            status=400)
+    return JsonResponse({"status": "success", "user": user.to_dict()})
+
