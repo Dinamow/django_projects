@@ -155,3 +155,22 @@ def update_profile(request):
     user.updated_at = timezone.now()
     user.save()
     return JsonResponse({"status": "success", "message": "User updated"})
+
+def delete_acc(request):
+    if request.method != "POST":
+        return JsonResponse({"status": "error", "message": "Invalid request"},
+                            status=400)
+    data = request.POST
+    if not data.get('password'):
+        return JsonResponse({"status": "error", "message": "password is required"},
+                            status=400)
+    user = Users.objects.filter(session_token=request.session['session_id']).first()
+    if not user:
+        return JsonResponse({"status": "error", "message": "Not logged in"},
+                            status=400)
+    if not check_password(data['password'], user.password):
+        return JsonResponse({"status": "error", "message": "The password is Invalid"},
+                            status=400)
+    user.delete()
+    return JsonResponse({"status": "sucess", "message": "User deleted"},
+                            status=200)
