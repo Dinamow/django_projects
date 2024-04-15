@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from users.models import Users
 from uuid import uuid4
 from django.contrib.auth.hashers import make_password, check_password
+from django.contrib.auth.password_validation import validate_password
 
 
 requered_fields = ['username', 'password', 'email', 'phone', 'address', 'city',
@@ -28,6 +29,7 @@ def create_user(request):
                                  "message": "Check your email for activation link"},
                                 status=400)
     try:
+        validate_password(data['password'])
         passowrd = make_password(data['password'])
         user = Users.objects.create(username=data['username'], password=passowrd,
                                     email=data['email'], phone=data['phone'],
@@ -125,6 +127,10 @@ def reset_password(request):
     if not user:
         return JsonResponse({"status": "error", "message": "Invalid token"},
                             status=400)
-    user.password = make_password(data['password'])
-    user.save()
-    return JsonResponse({"status": "success", "message": "Password changed"})
+    try:
+        validate_password(data['password'])
+        user.password = make_password(data['password'])
+        user.save()
+        return JsonResponse({"status": "success", "message": "Password changed"})
+    except Exception as e:
+        return JsonResponse({"status": "error", "message": str(e)}, status=400)
