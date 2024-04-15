@@ -100,3 +100,15 @@ class UsersTestCase(TestCase):
         self.assertNotEqual(resp.json()['token'], None)
         self.assertEqual(resp.json()['token'],
                          Users.objects.get(email="test2@gmail.com").session_token)
+    
+    def test_login_user_with_invalid_email(self):
+        data = {'email': 'invalid', 'password': 'test'}
+        resp = self.client.post(reverse('login'), data)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'Invalid email')
+    
+    def test_logout_user(self):
+        self.test_login_user()
+        resp = self.client.post(reverse('logout'))
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['message'], 'User logged out')
