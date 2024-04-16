@@ -1,7 +1,9 @@
+""" This module contains the Users model. """
 from django.db import models
 
 
 class Users(models.Model):
+    """Users model"""
     username = models.CharField(max_length=50)
     password = models.CharField(max_length=255)
     email = models.EmailField(max_length=50, unique=True)
@@ -19,6 +21,7 @@ class Users(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def to_dict(self):
+        """Return dictionary representation of the model."""
         return {'username': self.username,
                 'email': self.email,
                 'phone': self.phone,
@@ -28,6 +31,7 @@ class Users(models.Model):
                 'country': self.country,
                 'zip': self.zip,
                 'last_update': self.updated_at}
-    
+
     def __str__(self):
+        """Return string representation of the model."""
         return self.username

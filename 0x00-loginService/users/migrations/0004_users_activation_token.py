@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='users',
             name='activation_token',
-            field=models.CharField(default='<function uuid4 at 0x7f645a7f2020>', max_length=50),
+            field=models.CharField(
+                default='<function uuid4 at 0x7f645a7f2020>',
+                max_length=50),
         ),
     ]

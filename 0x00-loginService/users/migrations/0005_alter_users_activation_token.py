@@ -13,6 +13,8 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='users',
             name='activation_token',
-            field=models.CharField(default='5b2b6f1f-2317-4806-bf13-ea94ea549c42', max_length=50),
+            field=models.CharField(
+                default='5b2b6f1f-2317-4806-bf13-ea94ea549c42',
+                max_length=50),
         ),
     ]
