@@ -4,6 +4,7 @@ from uuid import uuid4
 from django.contrib.auth.hashers import make_password, check_password
 from django.contrib.auth.password_validation import validate_password
 from django.utils import timezone
+from django.core.validators import EmailValidator
 
 
 
@@ -32,8 +33,10 @@ def create_user(request):
                                 status=400)
     try:
         validate_password(data['password'])
-        passowrd = make_password(data['password'])
-        user = Users.objects.create(username=data['username'], password=passowrd,
+        valid = EmailValidator()
+        valid(data['email'])
+        password = make_password(data['password'])
+        user = Users.objects.create(username=data['username'], password=password,
                                     email=data['email'], phone=data['phone'],
                                     address=data['address'], city=data['city'],
                                     state=data['state'], country=data['country'],
@@ -42,7 +45,10 @@ def create_user(request):
                              "activation_token": user.activation_token},
                             status=201)
     except Exception as e:
-        return JsonResponse({"status": "error", "message": str(e)}, status=400)
+        error_message = str(e)
+        if isinstance(e, list):
+            error_message = e[0]
+        return JsonResponse({"status": "error", "message": error_message[2:-2]}, status=400)
 
 def activate_user(request):
     user = Users.objects.filter(activation_token=request.GET.get('token')).first()
@@ -144,14 +150,23 @@ def update_profile(request):
     if not data.get('username'):
         return JsonResponse({"status": "error", "message": "Username is required"},
                             status=400)
+    if not request.session.get('session_id'):
+        return JsonResponse({"status": "error", "message": "User not logged in"},
+                            status=400)
     user = Users.objects.filter(session_token=request.session['session_id']).first()
     if not user:
         return JsonResponse({"status": "error", "message": "No user found"},
                             status=400)
     fields = ['username', 'phone', 'address', 'city', 'state', 'country', 'zip']
-    for field in fields:
-        if data.get(field):
-            setattr(user, field, data[field])
+    for k, v in data.items():
+        if k not in fields:
+            return JsonResponse({"status": "error", "message": "invalid field"},
+                                status=400)
+        if k == 'username':
+            if Users.objects.filter(username=v).exclude(id=user.id).first():
+                return JsonResponse({"status": "error", "message": "Username already exists"},
+                                    status=400)
+        setattr(user, k, v)
     user.updated_at = timezone.now()
     user.save()
     return JsonResponse({"status": "success", "message": "User updated"})
@@ -163,6 +178,9 @@ def delete_acc(request):
     data = request.POST
     if not data.get('password'):
         return JsonResponse({"status": "error", "message": "password is required"},
+                            status=400)
+    if not request.session.get('session_id'):
+        return JsonResponse({"status": "error", "message": "Not logged in"},
                             status=400)
     user = Users.objects.filter(session_token=request.session['session_id']).first()
     if not user:
