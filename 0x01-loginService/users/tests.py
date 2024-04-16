@@ -2,7 +2,6 @@ from django.test import TestCase
 from users.models import Users
 from django.urls import reverse
 from django.contrib.auth.hashers import check_password, make_password
-# Create your tests here.
 
 
 class UsersTestCase(TestCase):
@@ -149,9 +148,10 @@ class UsersTestCase(TestCase):
     def test_update_user_profile(self):
         self.test_login_user()
         resp = self.client.post(reverse('update_profile'), {'username': 'new_username'})
-        Users.objects.get(username='new_username')
+        user = Users.objects.filter(username='new_username').first()
+        self.assertEqual(resp.json()['message'], 'User updated')
+        self.assertNotEqual(user, None)
         self.assertEqual(resp.status_code, 200)
-        self.assertEqual(resp.json()['status'], 'success')
     
     def test_delete_user_account(self):
         self.test_login_user()
@@ -161,3 +161,94 @@ class UsersTestCase(TestCase):
         self.assertEqual(resp.status_code, 200)
         user = Users.objects.filter(email='test2@gmail.com').first()
         self.assertEqual(user, None)
+
+    # Additional Test Cases
+
+    def test_create_user_with_invalid_password(self):
+        password = 'weak'
+        data = {'password': password, 'username': 'test3', 'email': 'test3@gmail.com',
+                'phone': '9876543210', 'address': 'test3', 'city': 'test3',
+                'state': 'test3', 'country': 'test3', 'zip': '123456'}
+        response = self.client.post(reverse('signup'), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'This password is too short. It must contain at least 8 characters.')
+
+    def test_create_user_with_invalid_email_format(self):
+        password = 'strongPassword123!'
+        data = {'password': password, 'username': 'test4', 'email': 'invalid_email',
+                'phone': '9876543210', 'address': 'test4', 'city': 'test4',
+                'state': 'test4', 'country': 'test4', 'zip': '123456'}
+        response = self.client.post(reverse('signup'), data)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()['message'], 'Enter a valid email address.')
+
+    def test_login_with_inactive_user(self):
+        self.test_create_user_with_endpoint()
+        data = {'email': 'test2@gmail.com', 'password': 'thisisatestpassword'}
+        resp = self.client.post(reverse('login'), data)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'User not activated')
+
+    def test_login_with_incorrect_password(self):
+        self.test_create_user_with_endpoint()
+        self.client.get(reverse('activate') + '?token=' + Users.objects.get(email="test2@gmail.com").activation_token)
+        data = {'email': 'test2@gmail.com', 'password': 'incorrectpassword'}
+        resp = self.client.post(reverse('login'), data)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'Invalid password')
+
+    def test_logout_without_logging_in(self):
+        resp = self.client.post(reverse('logout'))
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'User not logged in')
+
+    def test_forgot_password_with_unregistered_email(self):
+        data = {'email': 'unregistered_email@gmail.com'}
+        resp = self.client.post(reverse('forgot_password'), data)
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'Invalid email')
+
+    def test_forgot_password_with_valid_email(self):
+        self.test_create_user_with_endpoint()
+        resp = self.client.post(reverse('forgot_password'), {'email': 'test2@gmail.com'})
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.json()['message'], 'Check your email for activation link')
+
+    def test_reset_password_with_invalid_token(self):
+        resp = self.client.post(reverse('reset_password'), {'token': 'invalid_token', 'password': 'new_password'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'Invalid token')
+
+    def test_get_user_profile_unauthorized(self):
+        resp = self.client.get(reverse('profile', args=['test2']))
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'No user found')
+
+    def test_update_profile_without_username(self):
+        self.test_login_user()
+        resp = self.client.post(reverse('update_profile'), {})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'Username is required')
+
+    def test_update_profile_with_invalid_fields(self):
+        self.test_login_user()
+        resp = self.client.post(reverse('update_profile'), {'username': 'new_username', 'invalid_field': 'invalid'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'invalid field')
+
+    def test_delete_user_account_without_password(self):
+        self.test_login_user()
+        resp = self.client.post(reverse('delete_acc'), {})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'password is required')
+
+    def test_delete_user_account_with_invalid_password(self):
+        self.test_login_user()
+        resp = self.client.post(reverse('delete_acc'), {'password': 'invalid_password'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'The password is Invalid')
+
+    def test_delete_user_account_without_logging_in(self):
+        resp = self.client.post(reverse('delete_acc'), {'password': 'thisisatestpassword'})
+        self.assertEqual(resp.status_code, 400)
+        self.assertEqual(resp.json()['message'], 'Not logged in')
